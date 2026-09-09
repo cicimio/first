@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工号密码登录</title>
+    <!-- 使用柔和的风格，简洁清晰 -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f9ff 0%, #e6edf7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            padding: 16px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 48px 48px 40px 40px;
+            box-shadow: 0 20px 50px rgba(0, 20, 40, 0.20), 0 8px 24px rgba(0, 0, 0, 0.06);
+            padding: 48px 40px 40px;
+            max-width: 420px;
+            width: 100%;
+            transition: transform 0.25s ease;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .login-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 60px rgba(0, 20, 40, 0.25);
+        }
+
+        /* 头部 */
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            color: #0b1a33;
+            margin-bottom: 6px;
+        }
+
+        .login-header .sub {
+            color: #4d627c;
+            font-size: 15px;
+            font-weight: 400;
+            border-bottom: 2px solid rgba(55, 94, 148, 0.15);
+            padding-bottom: 14px;
+            display: inline-block;
+        }
+
+        /* 表单 */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1f334b;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .input-group label i {
+            font-style: normal;
+            background: #d9e2ef;
+            width: 22px;
+            height: 22px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #1f3a5f;
+        }
+
+        .input-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 16px 18px;
+            border: 1.5px solid #d7e0eb;
+            border-radius: 30px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            transition: all 0.2s;
+            color: #0b1a33;
+            font-weight: 450;
+            letter-spacing: 0.3px;
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+        }
+
+        .input-field input:focus {
+            border-color: #2b6c9e;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(43, 108, 158, 0.15), inset 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .input-field input::placeholder {
+            color: #8da0b9;
+            font-weight: 350;
+            font-size: 15px;
+            letter-spacing: 0.2px;
+        }
+
+        /* 辅助功能 (密码提示 / 额外) */
+        .form-options {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 6px;
+        }
+
+        .form-options a {
+            color: #32668f;
+            font-size: 14px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.15s;
+            border-bottom: 1px dotted transparent;
+        }
+
+        .form-options a:hover {
+            color: #0a3b5e;
+            border-bottom-color: #32668f;
+        }
+
+        /* 登录按钮 */
+        .login-btn {
+            background: #1e3b5c;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 50px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 6px 16px rgba(26, 67, 113, 0.25);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .login-btn:hover {
+            background: #143049;
+            box-shadow: 0 10px 24px rgba(18, 52, 86, 0.35);
+            transform: scale(1.01);
+        }
+
+        .login-btn:active {
+            transform: scale(0.97);
+            background: #0f263b;
+        }
+
+        /* 占位提示 footer */
+        .login-footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 14px;
+            color: #5f738f;
+            border-top: 1px solid rgba(90, 120, 160, 0.12);
+            padding-top: 24px;
+        }
+
+        .login-footer span {
+            background: #eef4fc;
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            color: #1f3f60;
+        }
+
+        /* 响应式微调 */
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 32px 20px 28px;
+                border-radius: 36px;
+            }
+
+            .login-header h1 {
+                font-size: 24px;
+            }
+
+            .input-field input {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+
+            .login-btn {
+                font-size: 17px;
+                padding: 14px;
+            }
+        }
+
+        /* 简单demo交互反馈 (纯UI 无实际提交) */
+        .demo-note {
+            margin-top: 18px;
+            font-size: 13px;
+            background: #eaf1fb;
+            padding: 10px 14px;
+            border-radius: 60px;
+            color: #1c3a5a;
+            text-align: center;
+            border: 1px solid #c7d8ed;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="login-header">
+            <h1>🔐 内部系统</h1>
+            <div class="sub">工号 · 密码登录</div>
+        </div>
+
+        <form class="login-form" id="loginForm" onsubmit="return handleLogin(event)">
+            <!-- 工号输入 -->
+            <div class="input-group">
+                <label for="employeeId">
+                    <i>👤</i> 工号
+                </label>
+                <div class="input-field">
+                    <input 
+                        type="text" 
+                        id="employeeId" 
+                        name="employeeId" 
+                        placeholder="请输入工号 (例如: 10086)"
+                        autocomplete="username"
+                        required
+                    >
+                </div>
+            </div>
+
+            <!-- 密码输入 -->
+            <div class="input-group">
+                <label for="password">
+                    <i>🔒</i> 密码
+                </label>
+                <div class="input-field">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="••••••••"
+                        autocomplete="current-password"
+                        required
+                    >
+                </div>
+            </div>
+
+            <!-- 选项行 (忘记密码) -->
+            <div class="form-options">
+                <a href="#" onclick="alert('请联系管理员重置密码。'); return false;">忘记密码？</a>
+            </div>
+
+            <!-- 登录按钮 -->
+            <button type="submit" class="login-btn">
+                登 录
+                <span style="font-size: 20px; line-height: 1;">→</span>
+            </button>
+
+            <!-- 演示说明 (仅用于UI展示) -->
+            <div class="demo-note">
+                ⚡ 演示：工号 <strong>admin</strong> · 密码 <strong>123456</strong>
+            </div>
+        </form>
+
+        <div class="login-footer">
+            <span>⏺ 版本 2.0 · 安全登录</span>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 登录处理函数（纯前端演示）
+         * 仅用于展示登录交互，实际项目应接入后端接口。
+         */
+        function handleLogin(event) {
+            // 阻止表单默认提交
+            event.preventDefault();
+
+            // 获取输入值
+            const employeeId = document.getElementById('employeeId').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            // 简单校验（工号和密码不能为空）
+            if (!employeeId || !password) {
+                alert('⚠️ 请完整填写工号和密码');
+                return false;
+            }
+
+            // 模拟登录验证 (演示逻辑：工号 admin 且密码 123456 视为成功)
+            const demoId = 'admin';
+            const demoPass = '123456';
+
+            if (employeeId === demoId && password === demoPass) {
+                alert('✅ 登录成功！ (演示环境) \n工号: ' + employeeId);
+                // 在实际项目中，此处可跳转或执行登录逻辑
+                // window.location.href = '/dashboard';
+            } else {
+                alert('❌ 登录失败，请检查工号或密码。\n(提示: 使用 admin / 123456)');
+            }
+
+            // 可选的清除密码 (出于安全考虑，实际开发不建议)
+            // document.getElementById('password').value = '';
+
+            return false; // 阻止实际提交
+        }
+
+        // 额外：增加一个简单的自动填充演示，让测试更便捷（但不强制）
+        // 当页面加载完成时，如果输入框为空，可自动填入演示数据（方便测试）
+        window.addEventListener('DOMContentLoaded', function() {
+            const idField = document.getElementById('employeeId');
+            const passField = document.getElementById('password');
+            // 如果工号输入为空，可填入演示账号 (仅为方便测试，不干扰用户)
+            if (idField.value === '') {
+                // 不强制填充，但给用户提示已经在demo-note中显示
+                // 但我们可以设置为空，让用户自行输入，或者预填 admin？
+                // 为了更好的演示体验，我们预填admin和密码，但让用户可修改。
+                // 但考虑到有些用户可能想直接体验，我们就预填 demo 数据。
+                // 注意：这里仅为了演示方便，不干扰真实场景。
+                // 使用setTimeout确保不会与用户操作冲突
+                setTimeout(() => {
+                    if (idField.value === '') {
+                        idField.value = 'admin';
+                        passField.value = '123456';
+                        // 添加一个小提示 (不强制)
+                        console.log('🔑 演示账号已自动填充 (admin / 123456)');
+                    }
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>
