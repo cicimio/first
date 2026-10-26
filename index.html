@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <!-- 下面这行非常重要：告诉手机浏览器不要缩放，按设备实际宽度来渲染 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iPhone Lock Screen</title>
     <style>
@@ -9,23 +10,46 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #000; display: flex; justify-content: center; align-items: center;
-            height: 100vh; overflow: hidden;
+            background-color: #111; /* 电脑端外围背景色 */
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            height: 100vh; 
+            overflow: hidden;
         }
 
+        /* 电脑端固定尺寸 */
         #phone {
-            position: relative; width: 390px; height: 844px; background-color: #000;
-            border-radius: 40px; overflow: hidden; box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            position: relative; 
+            width: 390px; 
+            height: 844px; 
+            background-color: #000;
+            border-radius: 40px; 
+            overflow: hidden; 
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        /* 手机端自适应 */
+        @media screen and (max-width: 500px) {
+            #phone {
+                width: 100vw; 
+                height: 100vh;
+                height: 100dvh; /* 适配手机浏览器地址栏 */
+                border-radius: 0; 
+                box-shadow: none; 
+            }
+            /* 手机端隐藏模拟的硬件元素 */
+            .dynamic-island { display: none; }
+            .home-indicator { display: none; }
+            .status-bar { display: none; /* 手机浏览器自带状态栏，也可以隐藏掉模拟的 */ }
         }
 
         /* 背景图容器 */
         .bg-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-            /* 保底渐变：如果你的1.jpg没加载出来，会显示这个渐变，而不是黑屏 */
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         }
         
-        /* 你的本地图片 */
         .bg-container img {
             width: 100%; height: 100%; object-fit: cover; display: block;
         }
@@ -75,7 +99,6 @@
             display: flex; justify-content: center; align-items: center; font-size: 10px;
         }
         .notif-icon img {width: 100%;height: 100%;object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-        .notif-icon div { width: 15px; height: 15px; border-radius: 50%; background: #ff9f0a; margin: 1px; }
         .notif-content { flex: 1; }
         .notif-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 2px; }
         .notif-title { font-weight: 600; }
@@ -134,10 +157,9 @@
     </style>
 </head>
 <body>
+<!-- 下方 HTML 结构保持你原来的即可，不用变 -->
 <div id="phone">
-    <!-- 背景图放在最底层 -->
     <div class="bg-container">
-        <!-- 注意这里：引用同文件夹下的 1.jpg -->
         <img src="1.jpg" alt="背景图片" onerror="this.style.display='none'">
     </div>
 
@@ -209,6 +231,7 @@
 </div>
 
 <script>
+    // JS 保持原样，无需改动
     const lockScreen = document.getElementById('lock-screen');
     const passcodeScreen = document.getElementById('passcode-screen');
     const passcodeDots = document.querySelectorAll('.dot');
