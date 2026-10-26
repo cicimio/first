@@ -9,23 +9,20 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #111; /* 电脑端外围背景 */
-            display: flex; justify-content: center; align-items: center;
+            background-color: #111; display: flex; justify-content: center; align-items: center;
             height: 100vh; overflow: hidden;
         }
 
-        /* 电脑端固定尺寸 */
         #phone {
             position: relative; width: 390px; height: 844px; background-color: #000;
             border-radius: 40px; overflow: hidden; box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
-        /* 背景图容器 */
         .bg-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         }
-        .bg-container img { width: 100%; height: 100%; object-fit: cover; display: block;image-rendering: -webkit-optimize-contrast;  }
+        .bg-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .status-bar {
             position: absolute; top: 0; left: 0; width: 100%; height: 50px;
@@ -62,39 +59,108 @@
             display: flex; align-items: center; gap: 5px;
         }
 
-        /* --- 通知栏自适应设置 --- */
+        /* --- 通知区域布局 --- */
         .notification-area { 
             position: absolute; 
             bottom: 80px; 
             left: 0;
             width: 100%; 
-            padding: 0 15px; /* 控制左右边距 */
+            padding: 0 15px; 
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
+
+        /* 清除按钮 */
+        .clear-btn {
+            align-self: flex-end;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            margin-bottom: 8px;
+            margin-right: 10px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 10px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .clear-btn:active { opacity: 0.5; }
+
+        /* --- 核心修改：层叠式消息容器 --- */
+        .notifications-wrapper {
+            position: relative;
+            width: 100%;
+            /* 计算总高度：最上面卡片60px + 下面两张卡片露出的高度 (2 * 8px) */
+            height: 76px; 
+            perspective: 1000px; /* 增加一点立体感 */
+        }
+
+        /* 单条通知卡片 */
         .notification {
-            width: 100%; /* 宽度自适应父级 */
-            height: 60px; /* 固定高度（可根据你需要调整） */
-            background: rgba(255, 255, 255, 0.4); 
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border-radius: 20px; 
+            position: absolute;
+            width: 100%;
+            height: 60px;
+            left: 0;
+            background: rgba(255, 255, 255, 0.4); /* 调整透明度更贴近苹果原生 */
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-radius: 18px; 
             padding: 10px 15px; 
             display: flex; align-items: center; gap: 12px;
-            color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            color: #000; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); /* 阴影朝上 */
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
             overflow: hidden;
         }
+
+        /* 卡片 1 (最底层, 往上缩并缩小一点) */
+        .notification:nth-child(1) {
+            top: 16px; /* 沉底露头 */
+            transform: scale(0.9); 
+            z-index: 1;
+            opacity: 0.7;
+        }
+        
+        /* 卡片 2 (中间层) */
+        .notification:nth-child(2) {
+            top: 8px;
+            transform: scale(0.95);
+            z-index: 2;
+            opacity: 0.9;
+        }
+
+        /* 卡片 3 (最顶层，完全显示) */
+        .notification:nth-child(3) {
+            top: 0;
+            z-index: 3;
+            background: rgba(255, 255, 255, 0.5); /* 最上层稍微亮一点 */
+        }
+
+        /* 悬停动效：鼠标/手指移到上面时，堆叠展开一点 (可选，很优雅) */
+        .notifications-wrapper:hover .notification:nth-child(1) { top: 20px; }
+        .notifications-wrapper:hover .notification:nth-child(2) { top: 10px; }
+
         .notif-icon {
             width: 35px; height: 35px; flex-shrink: 0;
             display: flex; justify-content: center; align-items: center;
         }
         .notif-icon img { width: 100%; height: 100%; object-fit: contain; }
+        
+        .notif-icon .fallback-dots { display: flex; gap: 2px; }
+        .notif-icon .fallback-dots div { width: 8px; height: 8px; border-radius: 50%; }
+
         .notif-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
         .notif-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 2px; }
         .notif-title { font-weight: 600; }
         .notif-time { color: #333; font-size: 12px; }
-        .notif-body { 
-            font-size: 14px; font-weight: 400; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* 文字过长显示省略号 */
+        .notif-body { font-size: 14px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* 清除时的动画类 */
+        .notifications-wrapper.cleared {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.9);
+            pointer-events: none;
         }
 
         /* 状态 2: 密码界面 */
@@ -147,18 +213,9 @@
             width: 130px; height: 5px; background: white; border-radius: 10px; z-index: 200;
         }
 
-        /* =========================================
-           手机端自适应 (屏幕宽度小于 500px)
-           ========================================= */
         @media screen and (max-width: 500px) {
-            #phone {
-                width: 100vw; height: 100vh; height: 100dvh;
-                border-radius: 0; box-shadow: none;
-            }
-            /* 手机端隐藏模拟元素 */
+            #phone { width: 100vw; height: 100vh; height: 100dvh; border-radius: 0; box-shadow: none; }
             .dynamic-island, .home-indicator, .status-bar { display: none; }
-            
-            /* 手机端字体和键盘稍微缩小，防止溢出 */
             .lock-time { font-size: 80px; }
             .key { width: 70px; height: 70px; }
             .keypad { gap: 12px 20px; margin-top: 40px; }
@@ -188,18 +245,68 @@
             <div class="lock-lang"> 22℃</div>
         </div>
         
-        <!-- 通知区域 -->
+        <!-- 修改后的通知区域 -->
         <div class="notification-area">
-            <div class="notification">
-                <div class="notif-icon">
-                    <img src="其他/图标/微信.png" alt="微信">
-                </div>
-                <div class="notif-content">
-                    <div class="notif-header">
-                        <span class="notif-title">哥~</span>
-                        <span class="notif-time">刚刚</span>
+            <!-- 清除按钮 -->
+            <div class="clear-btn" id="clear-btn">清除</div>
+            
+            <!-- 消息堆叠列表 (注意：在HTML中，最底层的消息必须写在最前面，最顶层的写在最后面) -->
+            <div class="notifications-wrapper" id="notif-wrapper">
+                <!-- 底层消息 (时间最老) -->
+                <div class="notification">
+                    <div class="notif-icon">
+                        <img src="其他/图标/微信.png" alt="微信" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="fallback-dots" style="display:none;">
+                            <div style="background:#ff3b30;"></div>
+                            <div style="background:#34c759;"></div>
+                            <div style="background:#007aff;"></div>
+                        </div>
                     </div>
-                    <div class="notif-body">你咋样啦？咋不说话</div>
+                    <div class="notif-content">
+                        <div class="notif-header">
+                            <span class="notif-title">微信</span>
+                            <span class="notif-time">10分钟前</span>
+                        </div>
+                        <div class="notif-body">明天记得带那个东西...</div>
+                    </div>
+                </div>
+                
+                <!-- 中间层消息 -->
+                <div class="notification">
+                    <div class="notif-icon">
+                        <img src="其他/图标/微信.png" alt="微信" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="fallback-dots" style="display:none;">
+                            <div style="background:#ff3b30;"></div>
+                            <div style="background:#34c759;"></div>
+                            <div style="background:#007aff;"></div>
+                        </div>
+                    </div>
+                    <div class="notif-content">
+                        <div class="notif-header">
+                            <span class="notif-title">微信</span>
+                            <span class="notif-time">5分钟前</span>
+                        </div>
+                        <div class="notif-body">[转账] 请收款</div>
+                    </div>
+                </div>
+
+                <!-- 顶层消息 (最新消息) -->
+                <div class="notification">
+                    <div class="notif-icon">
+                        <img src="其他/图标/微信.png" alt="微信" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="fallback-dots" style="display:none;">
+                            <div style="background:#ff3b30;"></div>
+                            <div style="background:#34c759;"></div>
+                            <div style="background:#007aff;"></div>
+                        </div>
+                    </div>
+                    <div class="notif-content">
+                        <div class="notif-header">
+                            <span class="notif-title">微信</span>
+                            <span class="notif-time">刚刚</span>
+                        </div>
+                        <div class="notif-body">哥~ 你咋样啦？咋不说话</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -248,11 +355,28 @@
     const cancelBtn = document.getElementById('cancel-btn');
     const keys = document.querySelectorAll('.key[data-val]');
     
+    // 获取清除按钮和消息容器
+    const clearBtn = document.getElementById('clear-btn');
+    const notifWrapper = document.getElementById('notif-wrapper');
+
     let currentPin = "";
     const CORRECT_PIN = "0703"; 
     let touchStartY = 0;
     let isDragging = false;
 
+    // 点击清除按钮的事件
+    clearBtn.addEventListener('click', () => {
+        // 添加动画类
+        notifWrapper.classList.add('cleared');
+        
+        // 等动画播完 (400ms)，把按钮和容器彻底隐藏
+        setTimeout(() => {
+            notifWrapper.style.display = 'none';
+            clearBtn.style.display = 'none';
+        }, 400);
+    });
+
+    // 上滑解锁逻辑
     function handleDragStart(e) {
         if (lockScreen.style.display === 'none') return;
         isDragging = true;
@@ -295,6 +419,7 @@
     window.addEventListener('mousemove', handleDragMove);
     window.addEventListener('mouseup', handleDragEnd);
 
+    // 密码输入逻辑
     keys.forEach(key => {
         key.addEventListener('click', () => {
             if (currentPin.length < 4) {
