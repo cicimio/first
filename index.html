@@ -2,7 +2,6 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 下面这行非常重要：告诉手机浏览器不要缩放，按设备实际宽度来渲染 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>iPhone Lock Screen</title>
     <style>
@@ -10,38 +9,15 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #111; /* 电脑端外围背景色 */
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            height: 100vh; 
-            overflow: hidden;
+            background-color: #111; /* 电脑端外围背景 */
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden;
         }
 
         /* 电脑端固定尺寸 */
         #phone {
-            position: relative; 
-            width: 390px; 
-            height: 844px; 
-            background-color: #000;
-            border-radius: 40px; 
-            overflow: hidden; 
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-        }
-
-        /* 手机端自适应 */
-        @media screen and (max-width: 500px) {
-            #phone {
-                width: 100vw; 
-                height: 100vh;
-                height: 100dvh; /* 适配手机浏览器地址栏 */
-                border-radius: 0; 
-                box-shadow: none; 
-            }
-            /* 手机端隐藏模拟的硬件元素 */
-            .dynamic-island { display: none; }
-            .home-indicator { display: none; }
-            .status-bar { display: none; /* 手机浏览器自带状态栏，也可以隐藏掉模拟的 */ }
+            position: relative; width: 390px; height: 844px; background-color: #000;
+            border-radius: 40px; overflow: hidden; box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
         /* 背景图容器 */
@@ -49,10 +25,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         }
-        
-        .bg-container img {
-            width: 100%; height: 100%; object-fit: cover; display: block;
-        }
+        .bg-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .status-bar {
             position: absolute; top: 0; left: 0; width: 100%; height: 50px;
@@ -88,22 +61,41 @@
             padding: 4px 10px; border-radius: 20px; backdrop-filter: blur(5px);
             display: flex; align-items: center; gap: 5px;
         }
-        .notification-area { position: absolute; bottom: 80px; width: 100%; padding: 0 15px; }
+
+        /* --- 通知栏自适应设置 --- */
+        .notification-area { 
+            position: absolute; 
+            bottom: 80px; 
+            left: 0;
+            width: 100%; 
+            padding: 0 15px; /* 控制左右边距 */
+            display: flex;
+            justify-content: center;
+        }
         .notification {
-            background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            border-radius: 20px; padding: 12px 15px; display: flex; align-items: flex-start; gap: 12px;
-            color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.1);overflow: hidden;
+            width: 100%; /* 宽度自适应父级 */
+            height: 60px; /* 固定高度（可根据你需要调整） */
+            background: rgba(255, 255, 255, 0.4); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px; 
+            padding: 10px 15px; 
+            display: flex; align-items: center; gap: 12px;
+            color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
         .notif-icon {
-            width: 35px; height: 35px; 
-            display: flex; justify-content: center; align-items: center; font-size: 10px;
+            width: 35px; height: 35px; flex-shrink: 0;
+            display: flex; justify-content: center; align-items: center;
         }
-        .notif-icon img {width: 100%;height: 100%;object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-        .notif-content { flex: 1; }
+        .notif-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .notif-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
         .notif-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 2px; }
         .notif-title { font-weight: 600; }
-        .notif-time { color: #333; }
-        .notif-body { font-size: 14px; font-weight: 400; }
+        .notif-time { color: #333; font-size: 12px; }
+        .notif-body { 
+            font-size: 14px; font-weight: 400; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* 文字过长显示省略号 */
+        }
 
         /* 状态 2: 密码界面 */
         #passcode-screen {
@@ -154,10 +146,26 @@
             position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
             width: 130px; height: 5px; background: white; border-radius: 10px; z-index: 200;
         }
+
+        /* =========================================
+           手机端自适应 (屏幕宽度小于 500px)
+           ========================================= */
+        @media screen and (max-width: 500px) {
+            #phone {
+                width: 100vw; height: 100vh; height: 100dvh;
+                border-radius: 0; box-shadow: none;
+            }
+            /* 手机端隐藏模拟元素 */
+            .dynamic-island, .home-indicator, .status-bar { display: none; }
+            
+            /* 手机端字体和键盘稍微缩小，防止溢出 */
+            .lock-time { font-size: 80px; }
+            .key { width: 70px; height: 70px; }
+            .keypad { gap: 12px 20px; margin-top: 40px; }
+        }
     </style>
 </head>
 <body>
-<!-- 下方 HTML 结构保持你原来的即可，不用变 -->
 <div id="phone">
     <div class="bg-container">
         <img src="1.jpg" alt="背景图片" onerror="this.style.display='none'">
@@ -179,6 +187,8 @@
             <div class="lock-time">4:03</div>
             <div class="lock-lang"> 22℃</div>
         </div>
+        
+        <!-- 通知区域 -->
         <div class="notification-area">
             <div class="notification">
                 <div class="notif-icon">
@@ -193,6 +203,7 @@
                 </div>
             </div>
         </div>
+        
         <div class="swipe-up-indicator"></div>
     </div>
 
@@ -231,7 +242,6 @@
 </div>
 
 <script>
-    // JS 保持原样，无需改动
     const lockScreen = document.getElementById('lock-screen');
     const passcodeScreen = document.getElementById('passcode-screen');
     const passcodeDots = document.querySelectorAll('.dot');
