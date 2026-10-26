@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iPhone Lock Screen</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-drag: none; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #111; /* 电脑端外围背景 */
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden;
+        }
+
+        /* 电脑端固定尺寸 */
+        #phone {
+            position: relative; width: 390px; height: 844px; background-color: #000;
+            border-radius: 40px; overflow: hidden; box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        /* 背景图容器 */
+        .bg-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .bg-container img { width: 100%; height: 100%; object-fit: cover; display: block;image-rendering: -webkit-optimize-contrast;  }
+
+        .status-bar {
+            position: absolute; top: 0; left: 0; width: 100%; height: 50px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 25px; color: white; font-size: 15px; font-weight: 600;
+            z-index: 100; pointer-events: none;
+        }
+        .status-icons { display: flex; gap: 5px; align-items: center; }
+        .dynamic-island {
+            position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 35px; background: #000; border-radius: 20px; z-index: 101;
+        }
+
+        /* 状态 1: 锁屏 */
+        #lock-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease;
+            display: flex; flex-direction: column;
+        }
+        .swipe-up-indicator {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 140px; height: 5px; background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px; z-index: 20;
+        }
+        .lock-content {
+            margin-top: 80px; display: flex; flex-direction: column; align-items: center;
+            color: white; text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .lock-date { font-size: 20px; font-weight: 500; margin-bottom: 10px; }
+        .lock-time { font-size: 90px; font-weight: 700; line-height: 1; letter-spacing: -2px; }
+        .lock-lang {
+            margin-top: 10px; font-size: 12px; background: rgba(0, 0, 0, 0.4);
+            padding: 4px 10px; border-radius: 20px; backdrop-filter: blur(5px);
+            display: flex; align-items: center; gap: 5px;
+        }
+
+        /* --- 通知栏自适应设置 --- */
+        .notification-area { 
+            position: absolute; 
+            bottom: 80px; 
+            left: 0;
+            width: 100%; 
+            padding: 0 15px; /* 控制左右边距 */
+            display: flex;
+            justify-content: center;
+        }
+        .notification {
+            width: 100%; /* 宽度自适应父级 */
+            height: 60px; /* 固定高度（可根据你需要调整） */
+            background: rgba(255, 255, 255, 0.4); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px; 
+            padding: 10px 15px; 
+            display: flex; align-items: center; gap: 12px;
+            color: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .notif-icon {
+            width: 35px; height: 35px; flex-shrink: 0;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .notif-icon img { width: 100%; height: 100%; object-fit: contain; }
+        .notif-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+        .notif-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 2px; }
+        .notif-title { font-weight: 600; }
+        .notif-time { color: #333; font-size: 12px; }
+        .notif-body { 
+            font-size: 14px; font-weight: 400; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* 文字过长显示省略号 */
+        }
+
+        /* 状态 2: 密码界面 */
+        #passcode-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 20;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: flex; flex-direction: column; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #passcode-screen.active { opacity: 1; pointer-events: auto; }
+        .passcode-header { margin-top: 100px; color: white; text-align: center; }
+        .lock-icon { font-size: 24px; margin-bottom: 10px; }
+        .passcode-title { font-size: 20px; font-weight: 500; margin-bottom: 20px; }
+        .dots-container { display: flex; gap: 15px; }
+        .dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 1px solid white; background: transparent; transition: background 0.1s;
+        }
+        .dot.filled { background: white; }
+        .keypad {
+            margin-top: 50px; display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 15px 25px; justify-items: center;
+        }
+        .key {
+            width: 75px; height: 75px; border-radius: 50%; background: rgba(255, 255, 255, 0.15);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; color: white; transition: background 0.1s;
+        }
+        .key:active { background: rgba(255, 255, 255, 0.4); }
+        .key-num { font-size: 32px; font-weight: 400; line-height: 1; }
+        .key-letters { font-size: 10px; letter-spacing: 1px; margin-top: 2px; }
+        .key.empty { background: transparent; pointer-events: none; }
+        .passcode-footer {
+            position: absolute; bottom: 50px; width: 100%;
+            display: flex; justify-content: space-between; padding: 0 30px;
+            color: white; font-size: 16px;
+        }
+        .passcode-footer span { cursor: pointer; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+        }
+        .shake { animation: shake 0.3s ease-in-out; }
+
+        .home-indicator {
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            width: 130px; height: 5px; background: white; border-radius: 10px; z-index: 200;
+        }
+
+        /* =========================================
+           手机端自适应 (屏幕宽度小于 500px)
+           ========================================= */
+        @media screen and (max-width: 500px) {
+            #phone {
+                width: 100vw; height: 100vh; height: 100dvh;
+                border-radius: 0; box-shadow: none;
+            }
+            /* 手机端隐藏模拟元素 */
+            .dynamic-island, .home-indicator, .status-bar { display: none; }
+            
+            /* 手机端字体和键盘稍微缩小，防止溢出 */
+            .lock-time { font-size: 80px; }
+            .key { width: 70px; height: 70px; }
+            .keypad { gap: 12px 20px; margin-top: 40px; }
+        }
+    </style>
+</head>
+<body>
+<div id="phone">
+    <div class="bg-container">
+        <img src="其他/图/1.jpg" alt="背景图片" onerror="this.style.display='none'">
+    </div>
+
+    <div class="dynamic-island"></div>
+    <div class="status-bar">
+        <div>4:03</div>
+        <div class="status-icons">
+            <svg width="18" height="12" viewBox="0 0 18 12" fill="white"><path d="M1 11h2V9H1v2zm4 0h2V7H5v4zm4 0h2V5H9v6zm4 0h2V3h-2v8zm4 0h2V1h-2v10z"/></svg>
+            <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><path d="M8 2.5C5.5 2.5 3.3 3.5 1.7 5.1L0 3.4C2.1 1.3 4.9 0 8 0s5.9 1.3 8 3.4l-1.7 1.7C12.7 3.5 10.5 2.5 8 2.5zm0 4C6.5 6.5 5.1 7.1 4.1 8.1L2.4 6.4C3.9 4.9 5.9 4 8 4s4.1.9 5.6 2.4l-1.7 1.7c-1-1-2.4-1.6-3.9-1.6zm0 3c-1 0-1.9.4-2.5 1L8 12l2.5-2.5C9.9 9 9 8.5 8 8.5z"/></svg>
+            <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="1" y="1" width="21" height="10" rx="3" stroke="white" stroke-width="1"/><rect x="2" y="2" width="15" height="8" rx="2" fill="white"/><path d="M23 4v4c1.1 0 2-.9 2-2s-.9-2-2-2z" fill="white"/></svg>
+        </div>
+    </div>
+
+    <div id="lock-screen">
+        <div class="lock-content">
+            <div class="lock-date">10月26日星期一</div>
+            <div class="lock-time">4:03</div>
+            <div class="lock-lang"> 22℃</div>
+        </div>
+        
+        <!-- 通知区域 -->
+        <div class="notification-area">
+            <div class="notification">
+                <div class="notif-icon">
+                    <img src="其他/图标/微信.png" alt="微信">
+                </div>
+                <div class="notif-content">
+                    <div class="notif-header">
+                        <span class="notif-title">哥~</span>
+                        <span class="notif-time">刚刚</span>
+                    </div>
+                    <div class="notif-body">你咋样啦？咋不说话</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="swipe-up-indicator"></div>
+    </div>
+
+    <div id="passcode-screen">
+        <div class="passcode-header">
+            <div class="lock-icon">🔒</div>
+            <div class="passcode-title">输入密码</div>
+            <div class="dots-container">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+        <div class="keypad">
+            <div class="key" data-val="1"><span class="key-num">1</span></div>
+            <div class="key" data-val="2"><span class="key-num">2</span><span class="key-letters">ABC</span></div>
+            <div class="key" data-val="3"><span class="key-num">3</span><span class="key-letters">DEF</span></div>
+            <div class="key" data-val="4"><span class="key-num">4</span><span class="key-letters">GHI</span></div>
+            <div class="key" data-val="5"><span class="key-num">5</span><span class="key-letters">JKL</span></div>
+            <div class="key" data-val="6"><span class="key-num">6</span><span class="key-letters">MNO</span></div>
+            <div class="key" data-val="7"><span class="key-num">7</span><span class="key-letters">PQRS</span></div>
+            <div class="key" data-val="8"><span class="key-num">8</span><span class="key-letters">TUV</span></div>
+            <div class="key" data-val="9"><span class="key-num">9</span><span class="key-letters">WXYZ</span></div>
+            <div class="key empty"></div>
+            <div class="key" data-val="0"><span class="key-num">0</span></div>
+            <div class="key empty"></div>
+        </div>
+        <div class="passcode-footer">
+            <span>紧急情况</span>
+            <span id="cancel-btn">取消</span>
+        </div>
+    </div>
+
+    <div class="home-indicator"></div>
+</div>
+
+<script>
+    const lockScreen = document.getElementById('lock-screen');
+    const passcodeScreen = document.getElementById('passcode-screen');
+    const passcodeDots = document.querySelectorAll('.dot');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const keys = document.querySelectorAll('.key[data-val]');
+    
+    let currentPin = "";
+    const CORRECT_PIN = "0703"; 
+    let touchStartY = 0;
+    let isDragging = false;
+
+    function handleDragStart(e) {
+        if (lockScreen.style.display === 'none') return;
+        isDragging = true;
+        touchStartY = e.touches ? e.touches[0].clientY : e.clientY;
+    }
+
+    function handleDragMove(e) {
+        if (!isDragging) return;
+        const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaY = currentY - touchStartY;
+        if (deltaY < 0) {
+            if (e.cancelable) e.preventDefault(); 
+            lockScreen.style.transition = 'none';
+            lockScreen.style.transform = `translateY(${deltaY}px)`;
+            lockScreen.style.opacity = Math.max(0, 1 - Math.abs(deltaY) / 300);
+        }
+    }
+
+    function handleDragEnd(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        lockScreen.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
+        const currentY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+        const deltaY = currentY - touchStartY;
+
+        if (deltaY < -50) {
+            lockScreen.style.transform = 'translateY(-100%)';
+            lockScreen.style.opacity = '0';
+            passcodeScreen.classList.add('active');
+        } else {
+            lockScreen.style.transform = 'translateY(0)';
+            lockScreen.style.opacity = '1';
+        }
+    }
+
+    lockScreen.addEventListener('touchstart', handleDragStart, {passive: false});
+    lockScreen.addEventListener('touchmove', handleDragMove, {passive: false});
+    lockScreen.addEventListener('touchend', handleDragEnd);
+    lockScreen.addEventListener('mousedown', handleDragStart);
+    window.addEventListener('mousemove', handleDragMove);
+    window.addEventListener('mouseup', handleDragEnd);
+
+    keys.forEach(key => {
+        key.addEventListener('click', () => {
+            if (currentPin.length < 4) {
+                currentPin += key.getAttribute('data-val');
+                updateDots();
+                if (currentPin.length === 4) setTimeout(verifyPin, 200);
+            }
+        });
+    });
+
+    function updateDots() {
+        passcodeDots.forEach((dot, index) => {
+            if (index < currentPin.length) dot.classList.add('filled');
+            else dot.classList.remove('filled');
+        });
+    }
+
+    function verifyPin() {
+        if (currentPin === CORRECT_PIN) {
+            window.location.href = '其他/页面/home.html'; 
+        } else {
+            const dotsContainer = document.querySelector('.dots-container');
+            dotsContainer.classList.add('shake');
+            setTimeout(() => {
+                dotsContainer.classList.remove('shake');
+                currentPin = "";
+                updateDots();
+            }, 300);
+        }
+    }
+
+    cancelBtn.addEventListener('click', () => {
+        passcodeScreen.classList.remove('active');
+        currentPin = "";
+        updateDots();
+        lockScreen.style.transform = 'translateY(0)';
+        lockScreen.style.opacity = '1';
+    });
+</script>
+</body>
+</html>
